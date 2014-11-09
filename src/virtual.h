@@ -1,0 +1,14 @@
+
+#ifndef __VIRTUAL___
+    #define __VIRTUAL___
+    #include "virtual.def"
+    
+    #define ulong unsigned long
+
+    extern void  virtual_addend(ulong addend_num);
+    extern void  virtual_init();
+
+    extern char  virtual_buf[VIRTUAL_BUF_SIZE];
+
+#endif
+

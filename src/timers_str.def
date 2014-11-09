@@ -1,0 +1,17 @@
+
+#ifndef __TIMERS_STR_DEF__
+    #define __TIMERS_STR_DEF__
+
+    #include "timers.def"
+    
+    #if SYSTEM_TIME_INCLUDE == INCLUDE_SYSTIME
+    char * code timer_str_array[] = {
+       "LOOP_TEST",
+       "UART",
+       "HAPI_REC",
+       "HAPI_SND",
+       "LED",
+    };
+    #endif
+
+#endif

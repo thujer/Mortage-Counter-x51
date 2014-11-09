@@ -1,0 +1,98 @@
+
+#include "target.h"
+#include "target.def"
+#include "stdio.h"
+#include "timers.h"
+#include "uart.h"
+#include "virtual.h"
+
+#define uchar unsigned char
+#define uint  unsigned int
+#define ulong unsigned long
+
+
+bit        nic_flag = 0;
+
+
+// +------------------------------------------------------------------------+
+// | Virtualni scitacka                                                     |
+// +------------------------------------------------------------------------+
+//  ulong ... 10 mist
+//
+/*
+void math_virtual_add(ulong num, char *num_buf, uchar num_buf_size)
+{
+    //  1234567890123
+    // [.............]
+
+    uchar index;
+
+    index = num_buf_size;
+
+    while(index)
+    {
+        divident = num / (10 << index);       // nastav delitele
+        temp_num = (num % 10);                // zkopiruj posledni cislo
+        num_buf[index] = temp_num + '0';      // zapis cislo do bufferu jako znak
+        index--;                              // posun index
+    }
+}
+*/
+
+
+
+void main()
+{
+    if(nic_flag)
+    {
+        uart(0);
+        time_set_hour(0);
+        time_set_minute(0);
+        time_set_second(0);
+        time_set_year(0);
+        time_set_month(0);
+        time_set_day(0);
+        time_string();
+    }
+
+    target_init();
+    timers_init();
+    uart_init(TARGET_XTAL, TARGET_INSTRUCTION_STEP, 19200);
+    virtual_init();
+
+    printf("Mortage counter\n");
+
+    virtual_addend(123456789);
+    printf("1: %13s\n", virtual_buf);
+
+    virtual_addend(123456789);
+    printf("2: %13s\n", virtual_buf);
+
+    virtual_addend(123456789);
+    printf("3: %13s\n", virtual_buf);
+
+    virtual_addend(123456789);
+    printf("4: %13s\n", virtual_buf);
+
+    virtual_addend(123456789);
+    printf("5: %13s\n", virtual_buf);
+
+    virtual_addend(123456789);
+    printf("6: %13s\n", virtual_buf);
+
+    virtual_addend(123456789);
+    printf("7: %13s\n", virtual_buf);
+
+    virtual_addend(123456789);
+    printf("8: %13s\n", virtual_buf);
+
+    virtual_addend(123456789);
+    printf("9: %13s\n", virtual_buf);
+
+    while(1)
+    {
+        uart_proc();
+    }
+}
+
+

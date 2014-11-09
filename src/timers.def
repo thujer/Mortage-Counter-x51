@@ -1,0 +1,81 @@
+
+#ifndef __TIMERS_DEF__
+    #define __TIMERS_DEF__
+
+    // ----------------------------------------------------------------------------------
+    #define NO_INCLUDE_SYSTIME         0
+    #define INCLUDE_SYSTIME            1
+    // Kompilovat se systemovym casem
+    #define SYSTEM_TIME_INCLUDE        INCLUDE_SYSTIME
+    // ----------------------------------------------------------------------------------
+
+    // Pocet tiku casovace do za 1 sekundu, pri nepresnosti upravit
+    #define TIME_TICK_TO_1SEC          100
+    
+
+    typedef enum
+    {
+        TIMER_ID_LOOP       = 0,     // Mereni rychlosti hlavni smycky, hodnotu ID=0 nemenit, odvozuje se od ni pocet
+        TIMER_ID_UART,               // Timeout serialu
+        TIMER_ID_HAPI,               // Timeout HAPI rozhrani
+        TIMER_ID_GSM,                // Timeout pro GSM modem
+        TIMER_ID_GSM_SERVICE,        // Timer pro sluzby GSM driveru
+        TIMER_ID_LED,                // Timer pro signalizacni LED
+        TIMER_ID_EEPROM,             // Timer pro zapis do EEPROM
+
+        TIMERS_COUNT                 // Pocet casovacu celkem
+    };
+    
+    
+    // Prirazeni ID timeoutum
+    #define TIMER_LOOP_TEST          timers[ TIMER_ID_LOOP        ]  // LOOPTEST: test rychlosti hlavni smycky
+    #define TIMER_UART_TRANSFER      timers[ TIMER_ID_UART        ]  // UART: cekani na odeslani predchoziho znaku
+    #define TIMER_HAPI               timers[ TIMER_ID_HAPI        ]  // HSPI: timeout komunikace - prijem
+    #define TIMER_SCHEDULER          timers[ TIMER_ID_SCHEDULER   ]  // SCHEDULER: spousteni uloh
+    #define TIMER_GSM                timers[ TIMER_ID_GSM         ]  // GSM: timeout driveru
+    #define TIMER_GSM_SERVICES       timers[ TIMER_ID_GSM_SERVICE ]  // GSM: spousteni sluzeb
+    #define TIMER_LED                timers[ TIMER_ID_LED         ]  // LED: casovac led
+    #define TIMER_EEPROM             timers[ TIMER_ID_EEPROM      ]  // EEPROM: timeout pro zapis
+    
+    
+    // Definice casovych useku
+    #define TIME_10MS                     1
+    #define TIME_20MS                     2
+    #define TIME_30MS                     3
+    #define TIME_50MS                     5
+    #define TIME_100MS                   10
+    #define TIME_120MS                   12
+    #define TIME_150MS                   15
+    #define TIME_170MS                   17
+    #define TIME_200MS                   20
+    #define TIME_300MS                   30
+    #define TIME_500MS                   50
+    #define TIME_1SEC                   100
+    #define TIME_1500MS                 150
+    #define TIME_2SEC                   200
+    #define TIME_3SEC                   300
+    #define TIME_4SEC                   400
+    #define TIME_5SEC                   500
+    #define TIME_6SEC                   600
+    #define TIME_7SEC                   700
+    #define TIME_8SEC                   800
+    #define TIME_9SEC                   900
+    #define TIME_10SEC                 1000
+    #define TIME_15SEC                 1500
+    #define TIME_20SEC                 2000
+    #define TIME_25SEC                 2500
+    #define TIME_30SEC                 3000
+    #define TIME_50SEC                 5000
+    #define TIME_60SEC                 6000
+    #define TIME_80SEC                 8000
+    #define TIME_100SEC               10000
+    #define TIME_120SEC               12000
+    #define TIME_140SEC               14000
+    #define TIME_150SEC               15000
+    #define TIME_5MIN                 30000
+    #define TIME_10MIN                60000
+    #define TIME_11MIN                65535
+
+
+#endif
+

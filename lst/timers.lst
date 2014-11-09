@@ -1,0 +1,339 @@
+C51 COMPILER V8.05a   TIMERS                                                               04/09/2008 00:51:07 PAGE 1   
+
+
+C51 COMPILER V8.05a, COMPILATION OF MODULE TIMERS
+OBJECT MODULE PLACED IN .\obj\timers.obj
+COMPILER INVOKED BY: H:\PrgJaz\Keil\C51\BIN\C51.EXE src\timers.c51 OMF2 ROM(COMPACT) BROWSE DEBUG PRINT(.\lst\timers.lst
+                    -) OBJECT(.\obj\timers.obj)
+
+line level    source
+
+   1          
+   2            /////////////////////////////////////////////////////////////////////////////
+   3            // +---------------------------------------------------------------------+ //
+   4            // |                   TIME & TIMEOUTS driver for x51                    | //
+   5            // |                  --------------------------------                   | //
+   6            // |                          Version 1.24                               | //
+   7            // |                                                                     | //
+   8            // |                         Thomas Hoodger                              | //
+   9            // |                     Copyright (c) 2005-2008                         | //
+  10            // |                   thomas.hoodger(at)gmail.com                       | //
+  11            // +---------------------------------------------------------------------+ //
+  12            //  Driver for system time and system timeouts                             //
+  13            //                                                                         //
+  14            //                                                                         //
+  15            // ----------------------------------------------------------------------- //
+  16            //                                                                         //
+  17            //  Version history from 1.20:                                             //
+  18            //                                                                         //
+  19            //          ----------------------------------------------                 //
+  20            //     1.21  time_def.k renamed to time.def                                //
+  21            //           prejmenovany ID timoutu na bezny tvar cTm_xxx                 //
+  22            //          ----------------------------------------------                 //
+  23            //     1.22  Slouceny drivery pro MCU RD2 a LPC922                         //
+  24            //           Misto ID timeoutu se pouzivaji primo zkracene                 //
+  25            //           definice timeru                                               //
+  26            //          ----------------------------------------------                 //
+  27            //     1.23  Pridana podminena kompilace pro MCU AT89C51ED2                //
+  28            //           Pridana podminena kompilace systemoveho casu                  //
+  29            //          ----------------------------------------------                 //
+  30            //     1.24  Opravena chyba v rutine preruseni casovece                    //
+  31            //           dekrementace citacu byla volana 2x                            //
+  32            //          ----------------------------------------------                 //
+  33            //                                                                         //
+  34            // ----------------------------------------------------------------------- //
+  35            /////////////////////////////////////////////////////////////////////////////
+  36          
+  37          #pragma LIST
+  38          #pragma PAGELENGTH(30000);
+  39          #pragma LINES
+  40          
+  41          // -------------------------------------------------------------------------
+  42          #include "target.def"
+  43          #include TARGET_SFR_HEADER
+  44          #include "timers.h"               
+  45          #include "timers.def"
+  46          #include "timers_str.def"
+  47          #include "str.h"
+  48          #include "timers.mcu"             
+  49          
+  50          // -------------------------------------------------------------------------
+  51          #define uchar unsigned char
+  52          #define uint  unsigned int
+  53          
+  54          // -------------------------------------------------------------------------
+  55          uint TARGET_XMEM timers[TIMERS_COUNT];   // Definice pro obsluhu casoveho limitu
+  56          
+  57          // -------------------------------------------------------------------------
+  58          
+  59          // Kompilovat systemovy cas
+  60          #if SYSTEM_TIME_INCLUDE == INCLUDE_SYSTIME
+  61              #include "stdio.h"
+  62          
+  63              struct
+  64              {
+  65                  uchar year;
+  66                  uchar month;
+  67                  uchar day;
+  68                  uchar hour;
+  69                  uchar min;
+  70                  uchar sec;
+  71              } idata time;
+  72              
+  73              uchar idata time_to_1sec;            // pocitadlo tiku do 1 sekundy
+  74              char  idata time_str[9];             // buffer pro report casoveho udaje jako retezce
+  75              
+  76          #endif                           
+  77          
+  78          
+  79          
+  80          #if SYSTEM_TIME_INCLUDE == INCLUDE_SYSTIME
+  81          // +--------------------------------------------------------------------+
+  82          // | Volano z preruseni - sekunda systemoveho casu                      |
+  83          // +--------------------------------------------------------------------+
+  84          #pragma NOAREGS
+  85          void time_systime_seconds()
+  86          {
+  87   1          time.sec++;                         // pocitej cas
+  88   1              
+  89   1          if(time.sec > 59)
+  90   1          { 
+  91   2              time.sec = 0;
+  92   2              time.min++;
+  93   2      
+  94   2              if(time.min>59)
+  95   2              {
+  96   3                  time.min=0;
+  97   3                  time.hour++;
+  98   3      
+  99   3                  if(time.hour > 23)
+ 100   3                  {
+ 101   4                      time.hour = 0;
+ 102   4                      time.day++;
+ 103   4      
+ 104   4                      if(time.day > 30)
+ 105   4                      {
+ 106   5                          time.day = 0;
+ 107   5                          time.month++;
+ 108   5      
+ 109   5                          if(time.month > 12)
+ 110   5                          { 
+ 111   6                              time.month=0;
+ 112   6                              time.year++;
+ 113   6                          }
+ 114   5                      }
+ 115   4                  }
+ 116   3              }
+ 117   2          }
+ 118   1      }
+ 119          #pragma AREGS
+ 120          #endif
+ 121          
+ 122          
+ 123          
+ 124          // +--------------------------------------------------------------------+
+ 125          // |                         Interrupt - Timer 2                        |
+ 126          // +--------------------------------------------------------------------+
+ 127          #pragma NOAREGS
+ 128          #if (TARGET_MCU==C51RD2) || (TARGET_MCU==C51ED2)
+              void timer_isr() interrupt 5 using 3
+              #endif
+ 131          
+ 132          #if TARGET_MCU == LPC922
+ 133          void timer_isr() interrupt 1 using 3
+ 134          #endif
+ 135          {
+ 136   1          uchar timer_id;
+ 137   1      
+ 138   1          if(timer_mcu_interupt_service())
+ 139   1          {
+ 140   2              // decrement all active timers
+ 141   2              for(timer_id=0; timer_id<TIMERS_COUNT; timer_id++)
+ 142   2                  if(timers[timer_id])
+ 143   2                  {
+ 144   3                      timers[timer_id]--;
+ 145   3                  }
+ 146   2      
+ 147   2              #if SYSTEM_TIME_INCLUDE == INCLUDE_SYSTIME
+ 148   2              if(time_to_1sec)
+ 149   2                  time_to_1sec--;      // Odpocitavej 1s
+ 150   2              else
+ 151   2              { 
+ 152   3                  time_to_1sec = TIME_TICK_TO_1SEC;     // Napln citac pro 1s
+ 153   3                  time_systime_seconds();
+ 154   3              }
+ 155   2              #endif
+ 156   2          }
+ 157   1      }
+ 158          #pragma AREGS
+ 159          
+ 160          
+ 161          #if SYSTEM_TIME_INCLUDE == INCLUDE_SYSTIME
+ 162          // +--------------------------------------------------------------------+
+ 163          // | Nastaveni systemovych hodin                                        |
+ 164          // +--------------------------------------------------------------------+
+ 165          void time_set_time(uchar hour,uchar min,uchar sec)
+ 166          { 
+ 167   1          time.hour = hour;
+ 168   1          time.min  = min;
+ 169   1          time.sec  = sec;
+ 170   1      }
+ 171          #endif
+ 172          
+ 173          
+ 174          #if SYSTEM_TIME_INCLUDE == INCLUDE_SYSTIME
+ 175          // +--------------------------------------------------------------------+
+ 176          // | Nastaveni systemoveho data                                         |
+ 177          // +--------------------------------------------------------------------+
+ 178          void time_set_date(uchar year,uchar month,uchar day)
+ 179          { 
+ 180   1          time.year  = year;
+ 181   1          time.month = month;
+ 182   1          time.day   = day;
+ 183   1      }
+ 184          #endif
+ 185          
+ 186          
+ 187          #if SYSTEM_TIME_INCLUDE == INCLUDE_SYSTIME
+ 188          // +--------------------------------------------------------------------+
+ 189          // | Nastaveni systemoveho data                                         |
+ 190          // +--------------------------------------------------------------------+
+ 191          void time_set_hour(uchar hour)
+ 192          { 
+ 193   1          time.hour = hour;
+ 194   1      }
+ 195          #endif
+ 196          
+ 197          
+ 198          #if SYSTEM_TIME_INCLUDE == INCLUDE_SYSTIME
+ 199          // +--------------------------------------------------------------------+
+ 200          // | Nastaveni systemoveho data                                         |
+ 201          // +--------------------------------------------------------------------+
+ 202          void time_set_minute(uchar minute)
+ 203          { 
+ 204   1          time.min = minute;
+ 205   1      }
+ 206          #endif
+ 207          
+ 208          
+ 209          #if SYSTEM_TIME_INCLUDE == INCLUDE_SYSTIME
+ 210          // +--------------------------------------------------------------------+
+ 211          // | Nastaveni systemoveho data                                         |
+ 212          // +--------------------------------------------------------------------+
+ 213          void time_set_second(uchar second)
+ 214          { 
+ 215   1          time.sec = second;
+ 216   1      }
+ 217          #endif
+ 218          
+ 219          
+ 220          #if SYSTEM_TIME_INCLUDE == INCLUDE_SYSTIME
+ 221          // +--------------------------------------------------------------------+
+ 222          // | Nastaveni systemoveho data                                         |
+ 223          // +--------------------------------------------------------------------+
+ 224          void time_set_year(uint year)
+ 225          { 
+ 226   1          time.year = year;
+ 227   1      }
+ 228          #endif
+ 229          
+ 230          
+ 231          #if SYSTEM_TIME_INCLUDE == INCLUDE_SYSTIME
+ 232          // +--------------------------------------------------------------------+
+ 233          // | Nastaveni systemoveho data                                         |
+ 234          // +--------------------------------------------------------------------+
+ 235          void time_set_month(uchar month)
+ 236          { 
+ 237   1          time.month = month;
+ 238   1      }
+ 239          #endif
+ 240          
+ 241          
+ 242          #if SYSTEM_TIME_INCLUDE == INCLUDE_SYSTIME
+ 243          // +--------------------------------------------------------------------+
+ 244          // | Nastaveni systemoveho data                                         |
+ 245          // +--------------------------------------------------------------------+
+ 246          void time_set_day(uchar day)
+ 247          { 
+ 248   1          time.day = day;
+ 249   1      }
+ 250          #endif
+ 251          
+ 252          
+ 253          #if SYSTEM_TIME_INCLUDE == INCLUDE_SYSTIME
+ 254          // +--------------------------------------------------------------------+
+ 255          // | Report aktualniho data do retezce                                  |
+ 256          // +--------------------------------------------------------------------+
+ 257          char *time_string()
+ 258          {
+ 259   1          sprintf(time_str,"%.2i:%.2i:%.2i",(int) time.hour,(int) time.min,(int) time.sec);  // zapis cas do buf
+             -feru
+ 260   1          time_str[8] = 0;                                                                   // zapis zero na ko
+             -nec
+ 261   1          return(time_str);                                                                  // vrat pointer na 
+             -buffer
+ 262   1      }
+ 263          #endif
+ 264          
+ 265          
+ 266          // +--------------------------------------------------------------------+
+ 267          // | Vrati pointer na nazev casovace timer_id                           |
+ 268          // +--------------------------------------------------------------------+
+ 269          /*
+ 270          char * timer_get_name_str(uint timer_id)
+ 271          {
+ 272              if(timer_id < TIMERS_COUNT)
+ 273              {
+ 274                  return(timer_str_array[timer_id]);
+ 275              }
+ 276              else
+ 277              {
+ 278                  return("!TMR ID OUT OF ARRAY!");
+ 279              }
+ 280          }
+ 281          */
+ 282          
+ 283          
+ 284          // +--------------------------------------------------------------------+
+ 285          // |              Nastaveni parametru a start casovace 2                |
+ 286          // +--------------------------------------------------------------------+
+ 287          void timers_init()
+ 288          {
+ 289   1          timers_mcu_init();
+ 290   1      
+ 291   1          #if SYSTEM_TIME_INCLUDE == INCLUDE_SYSTIME
+ 292   1          time_set_time(0, 0, 0);
+ 293   1          time_set_date(0, 0, 0);
+ 294   1          #endif
+ 295   1      }
+ 296          
+ 297          
+ 298          /*
+ 299              A basic operation consists of timer registers THx and TLx (x= 0, 1) connected in cas-
+ 300              Operations cade to form a 16-bit timer. Setting the run control bit (TRx) in TCON register (see
+ 301              Figure 2-3) turns the timer on by allowing the selected input to increment TLx. When
+ 302              TLx overflows it increments THx; when THx overflows it sets the timer overflow flag
+ 303              (TFx) in TCON register. Setting the TRx does not clear the THx and TLx timer registers.
+ 304              Timer registers can be accessed to obtain the current count or to enter preset values.
+ 305              They can be read at any time but TRx bit must be cleared to preset their values, other-
+ 306              wise the behavior of the timer/counter is unpredictable
+ 307          */
+ 308          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    277    ----
+   CONSTANT SIZE    =     67    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =     30    ----
+   BIT SIZE         =   ----       1
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

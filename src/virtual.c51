@@ -1,0 +1,63 @@
+
+#include "virtual.def"
+
+#define uchar  unsigned char
+#define uint   unsigned int   
+#define ulong  unsigned long
+
+
+char  virtual_buf[VIRTUAL_BUF_SIZE];
+
+
+// +------------------------------------+
+// | Pripocti cislo k virtualnimu cislu |
+// +------------------------------------+
+void virtual_addend(ulong addend_num)
+{
+    ulong virt;
+    ulong divident;
+    uchar index;
+    uchar char_cache;
+
+    divident = 1;
+    index = sizeof(virtual_buf);
+    
+    while(index)                                            // dokud neni index na konci
+    {
+        index--;                                            // posun index
+
+        virt = (uchar) ((addend_num / divident) % 10);      // nacti 1 cislici
+
+        char_cache = virtual_buf[index];               // nacti znak do cache
+
+        if(char_cache >= '0')                          // konverze znaku na decimalni cislo
+            char_cache -= '0';
+
+        char_cache += (uchar) virt;                    // pripocti cislici
+
+        if(char_cache > 9)                             // pokud prekrocena hodnota 9
+            if(index)                                       // pokud neni index na konci bufferu
+                virtual_buf[index-1]++;                     // prenos do vyssiho radu
+
+        char_cache %= 10;                              // rotuj znak
+
+        virtual_buf[index] = char_cache + '0';         // zapis znak z cache zpet do bufferu
+
+        divident *= 10;                                     // posun delitete
+    } 
+}
+
+
+
+// +------------------------------------+
+// | Inicializace                       |
+// +------------------------------------+
+void virtual_init()
+{
+    uchar      i;
+
+    for(i=0; i<sizeof(virtual_buf); i++)
+        virtual_buf[i]= '0';
+}
+
+

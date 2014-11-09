@@ -1,0 +1,97 @@
+C51 COMPILER V8.05a   TARGET                                                               04/09/2008 00:51:07 PAGE 1   
+
+
+C51 COMPILER V8.05a, COMPILATION OF MODULE TARGET
+OBJECT MODULE PLACED IN .\obj\target.obj
+COMPILER INVOKED BY: H:\PrgJaz\Keil\C51\BIN\C51.EXE src\target.c51 OMF2 ROM(COMPACT) BROWSE DEBUG PRINT(.\lst\target.lst
+                    -) OBJECT(.\obj\target.obj)
+
+line level    source
+
+   1           
+   2            ///////////////////////////////////////////////////////////////////////////////////
+   3            // +---------------------------------------------------------------------------+ //
+   4            // |                         TARGET routines                                   | //
+   5            // |                           vesion 1.03                                     | //
+   6            // |                      ---------------------                                | //
+   7            // |           thomas (point) hoodger (at) gmail (point) com                   | //
+   8            // |                            (spam war)                                     | //
+   9            // +---------------------------------------------------------------------------+ //
+  10            // | Definice zakladnich parametru pro ruzne typy MCU v zavislosti na zvolenem | //
+  11            // | ID typu MCU                                                               | //
+  12            // +---------------------------------------------------------------------------+ //
+  13            // | Revision story>                                                           | //
+  14            // |                                                                           | //
+  15            // |     1.03 ... Pridany zavisle definice typu pameti TARGET_XMEM             | //
+  16            // |                                                                           | //
+  17            // +---------------------------------------------------------------------------+ //
+  18            ///////////////////////////////////////////////////////////////////////////////////
+  19          #pragma LIST
+  20          #pragma PAGELENGTH(30000);
+  21          #pragma LINES
+  22          
+  23          #include "target.def"
+  24          #include TARGET_SFR_HEADER
+  25          
+  26          
+  27          char const code *target_mcu_str[] = {
+  28              "UNKNOWN",
+  29              "C51RD2",
+  30              "C51ED2",
+  31              "LPC922"
+  32          };
+  33              
+  34              
+  35          void target_init()
+  36          {
+  37   1          #if TARGET_MCU==C51ED2
+              
+                  /*
+                  CKCON0 Register (SFR:8Fh)
+                  CKCON0             7    6     5     4     3     2     1    0
+                  T89C51RD2          -  WDX2  PCAX2  SIX2 T2X2  T1X2  T0X2  X2      Reset value: x000 0000b
+                  AT89C51RD2/ED2  SPIX2 WDX2  PCAX2  SIX2 T2X2  T1X2  T0X2  X2      Reset value: 0000 0000b
+                  */
+                  
+                  CKCON0 = 1;                // Clock control register 1 - allow clock control
+              
+                  IEN0 = 0;                  // Zakaz vsech preruseni (IE)
+              
+                  IPH0 = 0;                  // Nulovani vsech priorit
+                  IPH1 = 0;                  // Nulovani vsech priorit
+                  IPL0 = 0;                  // Nulovani vsech priorit
+                  IPL1 = 0;                  // Nulovani vsech priorit
+              
+                  RS0 = 0;                   // Nastaveni registrove banky 0
+                  RS1 = 0;                   // Nastaveni registrove banky 0
+                  #endif
+  58   1      
+  59   1          #if TARGET_MCU==C51RD2
+                  IE = 0;                    // Zakaz vsech preruseni
+                  IP = 0;                    // Nulovani vsech priorit
+              
+                  RS0 = 0;                   // Nastaveni registrove banky 0
+                  RS1 = 0;                   // Nastaveni registrove banky 0
+                  #endif
+  66   1      
+  67   1          EA = 1;
+  68   1      }
+  69          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =      3    ----
+   CONSTANT SIZE    =     29    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =      8    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

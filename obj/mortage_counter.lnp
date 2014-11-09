@@ -1,0 +1,10 @@
+".\obj\main.obj",
+".\obj\START900.obj",
+".\obj\target.obj",
+".\obj\uart.obj",
+".\obj\timers.obj",
+".\obj\virtual.obj" 
+TO ".\obj\mortage_counter" 
+
+PRINT(".\lst\mortage_counter.map") CLASSES (CODE (C:0x0-C:0x1FFF), CONST (C:0x0-C:0x1FFF), 
+ECODE (C:0x0-C:0x1FFF), HCONST (C:0x0-C:0x1FFF)) 
